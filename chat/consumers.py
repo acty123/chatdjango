@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Message
-import json
+import json, time
 
 User = get_user_model()
 
@@ -11,14 +11,17 @@ class ChatConsumer(WebsocketConsumer):
 
     # load messages
     def fetch_messages(self, data):
-        message = Message.last_10_message()
-        content ={
-            'message':self.messages_to_json(message)
+        messages = Message.last_10_message()
+        content = {
+            'command': 'messages',
+            'messages': self.messages_to_json(messages)
         }
         self.send_message(content)
     
     # show new message
     def new_message(self, data):
+        if(data['message'] == ""):
+            return True
         author = data['from']
         author_user = User.objects.filter(username=author)[0]
         message = Message.objects.create(
@@ -34,13 +37,13 @@ class ChatConsumer(WebsocketConsumer):
         result = []
         for message in messages:
             result.append(self.message_to_json(message))
-        return result
+        return result[::-1]
 
     def message_to_json(self, message):
         return {
             'author': message.author.username,
             'content': message.content,
-            'timestamp': str(message.timestamp)
+            'timestamp': str( message.timestamp.strftime("%m/%d/%Y, %I:%M:%S %p"))
         }
 
     commands = {
