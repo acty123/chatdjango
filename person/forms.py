@@ -19,6 +19,8 @@ class CreateForm(UserCreationForm):
             'email': 'Email',
         }
 
+    # validations for registration
+    
     def clean_email(self):
         check_email = self.cleaned_data['email']
         storage_email = User.objects.filter(email=check_email)

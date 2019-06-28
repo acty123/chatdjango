@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
-    # 'person',
     'person.apps.PersonConfig',
     'chat'
 ]
@@ -53,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'person.middleware.OneSessionPerUser'
+    'person.middleware.OneSessionPerUser' # middleware for validate unique session
 ]
 
 ROOT_URLCONF = 'chatdjango.urls'
@@ -75,7 +74,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'chatdjango.wsgi.application'
-# Channels
+# Channels config redis serve
 ASGI_APPLICATION = 'chatdjango.routing.application'
 CHANNEL_LAYERS = {
     'default': {
@@ -141,4 +140,5 @@ STATICFILES_DIRS = [
 LOGIN_REDIRECT_URL = reverse_lazy('chat:room',args=['public'])
 LOGOUT_REDIRECT_URL = reverse_lazy('login')
 
+# notification message 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

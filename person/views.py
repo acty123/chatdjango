@@ -20,7 +20,6 @@ class CreateUser(SuccessMessageMixin, CreateView):
         data = form.instance
         data.user_id = self.request.user.id
         self.object = form.save()
-        # messages.success(self.request,'User created')
         return super(CreateUser, self).form_valid(form)
 
 
