@@ -140,3 +140,5 @@ STATICFILES_DIRS = [
 
 LOGIN_REDIRECT_URL = reverse_lazy('chat:room',args=['public'])
 LOGOUT_REDIRECT_URL = reverse_lazy('login')
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

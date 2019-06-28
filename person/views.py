@@ -3,16 +3,30 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.views.generic import CreateView, FormView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 from django.contrib.auth import login
 from django.urls import reverse_lazy
 from .forms import CreateForm
 
-class CreateUser(CreateView):
+class CreateUser(SuccessMessageMixin, CreateView):
     model = User
     template_name = 'person/create.html'
     form_class = CreateForm
     success_url = reverse_lazy('login')
-    # success_url = reverse_lazy('chat:room',args=['public'])# user for login
+    success_message = 'User created'
+
+    def form_valid(self, form):
+        data = form.instance
+        data.user_id = self.request.user.id
+        self.object = form.save()
+        # messages.success(self.request,'User created')
+        return super(CreateUser, self).form_valid(form)
+
+
+    def dispatch(self, *args, **kwargs):
+        return super(CreateUser, self).dispatch(*args, **kwargs)
+
 
 class LoginView(FormView):
     form_class = AuthenticationForm

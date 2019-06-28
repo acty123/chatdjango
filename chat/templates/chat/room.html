@@ -5,160 +5,159 @@
 {% block extrahead %}
 <link href="{% static 'style.css' %}" type="text/css" rel="stylesheet">
 {% endblock%}
-    
-{% block content %}		
-    <!-- <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
+
+{% block content %}
+<!-- <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
     <input id="chat-message-input" type="text" size="100"/><br/>
     <input id="chat-message-submit" type="button" value="Send"/> -->
-    <div class="container">
-            <h3 class=" text-center">Public chat</h3>
-            <div class="messaging">
-                <div class="inbox_msg">
-                    <div class="inbox_people">
-                        <div class="headind_srch">
-                            <div class="recent_heading">
-                                <h4>{{person.0.username}}</h4>
-                            </div>
-                            <div class="srch_bar">
-                                <div class="stylish-input-group">
-                                        <a href="{% url "logout" %}" class="float-right btn btn-outline-primary mt-1">Log out</a>
-                                 </div>
-                            </div>
-                        </div>
-                        <div class="inbox_chat">
-                            
-                            <div class="chat_list active_chat">
-                                <div class="recent_heading">
-                                    <h4>User info</h4>
-                                </div>
-                                <br><br>
-                                <div class="chat_people">
-                                    <div class="chat_img"> 
-                                        <img src="https://ptetutorials.com/images/user-profile.png"
-                                            alt="sunil"> 
-                                    </div>
-                                    <div class="chat_ib">
-                                        <h5><b>First name </b>{{person.0.first_name}}</h5>
-                                        <h5><b>Last name </b> {{person.0.last_name}}</h5>
-                                        <p><b>Email </b> {{person.0.email}}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
+<h3 class=" text-center">Public chat</h3>
+<div class="messaging">
+    <div class="inbox_msg">
+        <div class="inbox_people col-xs-12">
+            <div class="headind_srch">
+                <div class="recent_heading">
+                    <h4>{{person.0.username}}</h4>
+                </div>
+                <div class="srch_bar">
+                    <div class="stylish-input-group">
+                        <a href="{% url "logout" %}" class="float-right btn btn-outline-primary mt-1">Log out</a>
                     </div>
-                    <div class="mesgs">
-                        <div id="chat-log" class="msg_history">
-                           
+                </div>
+            </div>
+            <div class="inbox_chat">
+
+                <div class="chat_list active_chat">
+                    <div class="recent_heading">
+                        <h4>User info</h4>
+                    </div>
+                    <br><br>
+                    <div class="chat_people">
+                        <div class="chat_img">
+                            <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil">
                         </div>
-                        <div class="type_msg">
-                            <div class="input_msg_write">
-                                <input id="chat-message-input" type="text" class="write_msg" placeholder="Type a message" />
-                                <button id="chat-message-submit" class="msg_send_btn" type="button"><i class="fa fa-paper-plane-o"
-                                        aria-hidden="true"></i></button>
-                            </div>
+                        <div class="chat_ib">
+                            <h5><b>First name </b>{{person.0.first_name}}</h5>
+                            <h5><b>Last name </b> {{person.0.last_name}}</h5>
+                            <p><b>Email </b> {{person.0.email}}</p>
                         </div>
                     </div>
                 </div>
-    
             </div>
         </div>
+        <div class="mesgs col-xs-12">
+            <div id="chat-log" class="msg_history">
 
-        <script src="{% static 'reconnecting-websocket.js' %}"></script>
-        <script>
-            
-        </script>
-        <script>
-            var roomName = {{ room_name_json }};
-            var username = {{ username }};
-        
-            var chatSocket = new ReconnectingWebSocket(
-                'ws://' + window.location.host +
-                '/ws/chat/' + roomName + '/');
-        
-            // load last 10 messages
-            chatSocket.onopen = function(e) {
-              fetchMessages();
+            </div>
+            <div class="type_msg">
+                <div class="input_msg_write">
+                    <input id="chat-message-input" type="text" class="write_msg" placeholder="Type a message" />
+                    <button id="chat-message-submit" class="msg_send_btn" type="button"><i class="fa fa-paper-plane-o"
+                            aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="{% static 'reconnecting-websocket.js' %}"></script>
+<script>
+
+</script>
+<script>
+    var roomName = {{ room_name_json }};
+    var username = {{ username }};
+
+    var chatSocket = new ReconnectingWebSocket(
+        'ws://' + window.location.host +
+        '/ws/chat/' + roomName + '/');
+
+    // load last 10 messages
+    chatSocket.onopen = function (e) {
+        fetchMessages();
+    }
+
+    // verify command
+    chatSocket.onmessage = function (e) {
+        var data = JSON.parse(e.data);
+        if (data['command'] === 'messages') {
+            for (let i = 0; i < data['messages'].length; i++) {
+                createMessage(data['messages'][i]);
             }
-        
-            // verify command
-            chatSocket.onmessage = function (e) {
-                var data = JSON.parse(e.data);
-                if (data['command'] === 'messages') {
-                  for (let i=0; i<data['messages'].length; i++) {
-                    createMessage(data['messages'][i]);
-                  }
-                } else if (data['command'] === 'new_message'){
-                  if (data['message']['content'] !=""){
-                    createMessage(data['message']);
-                  }
-                  
-                }
-            };
-        
-            chatSocket.onclose = function (e) {
-                console.error('Chat socket closed unexpectedly');
-            };
-        
-            // send message with key enter (calls event click)
-            document.querySelector('#chat-message-input').onkeyup = function (e) {
-                if (e.keyCode === 13) {  // enter, return
-                    document.querySelector('#chat-message-submit').click();
-                }
-            };
-        
-            // send message with click
-            document.querySelector('#chat-message-submit').onclick = function (e) {
-                var messageInputDom = document.querySelector('#chat-message-input');
-                var message = messageInputDom.value;
-                chatSocket.send(JSON.stringify({
-                    'command': 'new_message',
-                    'message': message,
-                    'from': username
-                }));
-        
-                messageInputDom.value = '';
-            };
-            // show last 10
-            function fetchMessages() {
-              chatSocket.send(JSON.stringify({'command': 'fetch_messages' }));
+        } else if (data['command'] === 'new_message') {
+            if (data['message']['content'] != "") {
+                createMessage(data['message']);
             }
-        
-            // show message in html
-            function createMessage(data) {
-              var author = data['author'];
-              var divTag = document.createElement('div');
-              var divTagTyp = document.createElement('div');
-              
-              
-              var time = document.createElement('span');
-              time.textContent = data.timestamp.toLocaleString();
-              time.className='time_date';
-              var pTag = document.createElement('p');
-              var bTag = document.createElement('b');
-              bTag.textContent = author+' ';
-              pTag.innerHTML = "<p><b>"+author+"</b>: "+data.content+"<p>";
-              
-              if (author === username) {
-                divTag.className = 'incoming_msg';
-                divTagTyp.className='sent_msg';
-                divTagTyp.appendChild(pTag);
-                divTagTyp.appendChild(time);
-              } else {
-                divTag.className = 'outgoing_msg';
-                var divTagRecMes = document.createElement('div');
-                divTagRecMes.className='received_withd_msg';
-                divTagTyp.className='received_msg';
-        
-                divTagRecMes.appendChild(pTag);
-                divTagRecMes.appendChild(time);
-                divTagTyp.appendChild(divTagRecMes)
-              }
-              // show new message
-              divTag.appendChild(divTagTyp);
-              document.querySelector('#chat-log').appendChild(divTag);
-              // automatic scroll
-              var area = document.getElementById('chat-log');
-              area.scrollTop = area.scrollHeight;
-            }
-        </script>
+
+        }
+    };
+
+    chatSocket.onclose = function (e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // send message with key enter (calls event click)
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    // send message with click
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        var messageInputDom = document.querySelector('#chat-message-input');
+        var message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'command': 'new_message',
+            'message': message,
+            'from': username
+        }));
+
+        messageInputDom.value = '';
+    };
+    // show last 10
+    function fetchMessages() {
+        chatSocket.send(JSON.stringify({ 'command': 'fetch_messages' }));
+    }
+
+    // show message in html
+    function createMessage(data) {
+        var author = data['author'];
+        var divTag = document.createElement('div');
+        var divTagTyp = document.createElement('div');
+
+
+        var time = document.createElement('span');
+        time.textContent = data.timestamp.toLocaleString();
+        time.className = 'time_date';
+        var pTag = document.createElement('p');
+        var bTag = document.createElement('b');
+        bTag.textContent = author + ' ';
+        pTag.innerHTML = "<p><b>" + author + "</b>: " + data.content + "<p>";
+
+        if (author === username) {
+            divTag.className = 'incoming_msg';
+            divTagTyp.className = 'sent_msg';
+            divTagTyp.appendChild(pTag);
+            divTagTyp.appendChild(time);
+        } else {
+            divTag.className = 'outgoing_msg';
+            var divTagRecMes = document.createElement('div');
+            divTagRecMes.className = 'received_withd_msg';
+            divTagTyp.className = 'received_msg';
+
+            divTagRecMes.appendChild(pTag);
+            divTagRecMes.appendChild(time);
+            divTagTyp.appendChild(divTagRecMes)
+        }
+        // show new message
+        divTag.appendChild(divTagTyp);
+        document.querySelector('#chat-log').appendChild(divTag);
+        // automatic scroll
+        var area = document.getElementById('chat-log');
+        area.scrollTop = area.scrollHeight;
+    }
+</script>
 {% endblock %}
