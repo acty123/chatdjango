@@ -94,10 +94,8 @@ class ChatConsumer(WebsocketConsumer):
     # Receive message from room group
     def chat_message(self, event):
         session_active = self.scope['session'].session_key
-        author= event['message']['message']['author']
-        author_user = User.objects.filter(username=author)[0]
+        author_user = User.objects.filter(username=self.scope['user'])[0]
         log = LoggedInUser.objects.filter(user=author_user)[0]
-        
         if session_active != log.session_key:
             return True
 
