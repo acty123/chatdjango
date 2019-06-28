@@ -27,10 +27,14 @@ class CreateUser(SuccessMessageMixin, CreateView):
         return super(CreateUser, self).dispatch(*args, **kwargs)
 
 
-class LoginView(FormView):
+class LoginView(SuccessMessageMixin, FormView):
     form_class = AuthenticationForm
     template_name = 'login.html'
     success_url = reverse_lazy('chat:room',args=['public'])
+
+    def form_valid(self, form):
+        login(self.request, form.get_user())
+        return super(LoginView, self).form_valid(form)
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -38,6 +42,4 @@ class LoginView(FormView):
         else:
             return super(LoginView, self).dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        login(self.request, form.get_user())
-        return super(LoginView, self).form_valid(form)
+    
