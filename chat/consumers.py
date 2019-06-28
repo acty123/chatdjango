@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Message
+from person.models import LoggedInUser
 import json, time
 
 User = get_user_model()
@@ -18,12 +19,14 @@ class ChatConsumer(WebsocketConsumer):
         }
         self.send_message(content)
     
-    # show new message
+    # show new message and save
     def new_message(self, data):
-        if(data['message'] == ""):
-            return True
+        session_active = self.scope['session'].session_key
         author = data['from']
         author_user = User.objects.filter(username=author)[0]
+        log = LoggedInUser.objects.filter(user=author_user)[0]
+        if(data['message'] == "" or session_active != log.session_key):
+            return True
         message = Message.objects.create(
             author=author_user, 
             content=data['message'])
@@ -75,8 +78,8 @@ class ChatConsumer(WebsocketConsumer):
         data = json.loads(text_data)
         self.commands[data['command']](self,data)
 
+    # Send the new messages
     def send_chat_message(self, message):
-        
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -84,11 +87,19 @@ class ChatConsumer(WebsocketConsumer):
                 'message': message
             }
         )
-
+    # send the previous messages
     def send_message(self, message):
         self.send(text_data=json.dumps(message))
 
     # Receive message from room group
     def chat_message(self, event):
+        session_active = self.scope['session'].session_key
+        author= event['message']['message']['author']
+        author_user = User.objects.filter(username=author)[0]
+        log = LoggedInUser.objects.filter(user=author_user)[0]
+        
+        if session_active != log.session_key:
+            return True
+
         message = event['message']
         self.send(text_data=json.dumps(message)) 
