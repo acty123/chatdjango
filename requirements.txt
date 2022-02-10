@@ -1,5 +1,5 @@
 channels==2.2.0
-Django==2.2.24
+Django==2.2.27
 channels-redis==2.4.0
 aioredis==1.2.0
 hiredis==1.0.0
